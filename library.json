@@ -1,0 +1,23 @@
+{
+    "name" : "PlatformIO-FreeRTOS",
+    "description": "FreeRTOS mirror modified for use with PlatformIO",
+    "keywords": "FreeRTOS,rtos,libopencm3",
+    "authors": [
+        {
+            "name": "James Bennion-Pedley",
+            "url": "https://github.com/BOJIT",
+            "maintainer": true
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/BOJIT/PlatformIO-FreeRTOS"
+    },
+    "version" : "1.0.0",
+    "license": "MIT",
+    "frameworks": "libopencm3",
+    "platforms": "ststm32, gd32v, siliconlabsefm32, nxplpc, atmelsam", 
+    "build" : {
+        "extraScript": "lib_build.py"
+    }
+}
