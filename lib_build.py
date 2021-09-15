@@ -1,11 +1,19 @@
 import sys
+import json
 from os.path import join, realpath
 
 Import("env")
 
-# This dict contains every supported libopencm3 processor.
+# Install GitPython for interacting with remote repositories
+try:
+    import git
+except ImportError:
+    env.Execute("$PYTHONEXE -m pip install GitPython")
+    import git
+
 # For each microcontroller, select the corresponding FreeRTOS port folder:
 devices = {
+    # libopencm3 macros
     "STM32F0": "ARM_CM0",
     "STM32F1": "ARM_CM3",
     "STM32F2": "ARM_CM3",
@@ -42,27 +50,57 @@ devices = {
     "LM3S": "ARM_CM3",
     "LM4F": "ARM_CM4F",
     "MSP432E4": "ARM_CM4F",
-    "SWM050": "ARM_CM0"
+    "SWM050": "ARM_CM0",
+
+    # Arduino/STM32Cube macros
+    "STM32F0xx": "ARM_CM0",
+    "STM32F1xx": "ARM_CM3",
+    "STM32F2xx": "ARM_CM3",
+    "STM32F3xx": "ARM_CM4F",
+    "STM32F4xx": "ARM_CM4F",
+    "STM32F7xx": "ARM_CM7/r0p1",
+    "STM32G0xx": "ARM_CM0",
+    "STM32G4xx": "ARM_CM4F",
+    "STM32H7xx": "ARM_CM4F",
+    "STM32L0xx": "ARM_CM0",
+    "STM32L1xx": "ARM_CM3",
+    "STM32L4xx": "ARM_CM4F",
+    "STM32L5xx": "ARM_CM33/non_secure",
+    "STM32WBxx": "ARM_CM4F",
+    "STM32WLxx": "ARM_CM4F"
 }
 
-#env.Append(CPPPATH=["FreeRTOS-Kernel/portable/GCC/ARM_CM7"])
+SRC_URL = "https://github.com/FreeRTOS/FreeRTOS-Kernel.git"
 
 port = []
 
-# Check all definitions and try to find matching libopencm3 definition:
+# Check all definitions and try to find matching macro/definition:
 for item in env.get("CPPDEFINES", []):
     if isinstance(item, tuple):
         if item[0] in devices:
             port.append(item[0])
+    else:
+        if item in devices:
+            port.append(item)
 
-# Throw exception if no defines match a libopencm3 device name:
+# Check for the latest tag from version control
+g = git.cmd.Git()
+blob = g.ls_remote(SRC_URL, sort='-v:refname', tags=True)
+entries = blob.split('\n')
+tags = list(map(lambda x: x.partition('refs/tags/')[2], entries))
+print(tags)
+print(tags[0])
+
+# Throw exception if no macros match a device name:
 if len(port) == 0:
-    sys.stderr.write("Error: No Libopencm3 device defined for FreeRTOS!\n")
+    sys.stderr.write("Error: No device defined for FreeRTOS! Please provide platform manually - options below:\n")
+    device_keys = devices.keys()
+    s = ' ,'.join(device_keys)
+    sys.stderr.write(str(s) + '\n')
     env.Exit(1)
-# Throw exception if more than one libopencm3 device name is defined:
+# Throw exception if more than one device name is defined:
 elif len(port) > 1:
-    sys.stderr.write("Error!: Multiple Libopencm3 devices defined: %s\n\
-Using %s as default device.\n" % (" ".join(port), port[0]))
+    sys.stderr.write("Error!: Multiple devices defined: %s\n Using %s as default device.\n" % (" ".join(port), port[0]))
     env.Exit(1)
 # Else, add the appropriate port folders to the include path and source filter:
 else:

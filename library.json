@@ -13,10 +13,10 @@
         "type": "git",
         "url": "https://github.com/BOJIT/PlatformIO-FreeRTOS"
     },
-    "version" : "1.0.0",
+    "version" : "2.0.0",
     "license": "MIT",
-    "frameworks": "libopencm3",
-    "platforms": "ststm32, gd32v, siliconlabsefm32, nxplpc, atmelsam", 
+    "frameworks": "libopencm3, arduino, cmsis, stm32cube, spl",
+    "platforms": "ststm32, gd32v, siliconlabsefm32, nxplpc, atmelsam",
     "build" : {
         "extraScript": "lib_build.py"
     }
