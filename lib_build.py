@@ -1,6 +1,5 @@
 import sys
-import json
-from os.path import join, realpath
+import os
 
 Import("env")
 
@@ -73,23 +72,43 @@ devices = {
 SRC_URL = "https://github.com/FreeRTOS/FreeRTOS-Kernel.git"
 
 port = []
+freertos_tag = ""
+tag_name = ""
 
 # Check all definitions and try to find matching macro/definition:
 for item in env.get("CPPDEFINES", []):
     if isinstance(item, tuple):
         if item[0] in devices:
             port.append(item[0])
+        # Look for special tags while parsing the macros
+        elif item[0] == 'FREERTOS_TAG':
+            freertos_tag = item[1]
     else:
         if item in devices:
             port.append(item)
 
-# Check for the latest tag from version control
-g = git.cmd.Git()
-blob = g.ls_remote(SRC_URL, sort='-v:refname', tags=True)
-entries = blob.split('\n')
-tags = list(map(lambda x: x.partition('refs/tags/')[2], entries))
-print(tags)
-print(tags[0])
+# Clone repository if it doesn't exist
+kernel_path = os.path.realpath('./FreeRTOS-Kernel')
+if not os.path.isdir(kernel_path):
+    # Pull tags from version control
+    g = git.cmd.Git()
+    blob = g.ls_remote(SRC_URL, sort='-v:refname', tags=True, refs=True)
+    entries = blob.split('\n')
+    tags = list(map(lambda x: x.partition('refs/tags/')[2], entries))
+
+    if not freertos_tag:
+        # Checkout latest tag
+        tag_name = tags[0]
+    else:
+        # Checkout specified tag
+        for tag in tags:
+            if freertos_tag == tag:
+                tag_name = tag
+        if not tag_name:
+            sys.stderr.write("PlatformIO-FreeRTOS: Tag '%s' could not be found in remote repository!\n" % freertos_tag)
+            env.Exit(1)
+
+    kernel = git.Repo.clone_from(SRC_URL, kernel_path, depth=1, b=tag_name)
 
 # Throw exception if no macros match a device name:
 if len(port) == 0:
@@ -105,13 +124,13 @@ elif len(port) > 1:
 # Else, add the appropriate port folders to the include path and source filter:
 else:
     print("PlatformIO-FreeRTOS: building for", port[0])
-    env.Append(CPPPATH=[realpath("FreeRTOS-Kernel/include")])
-    env.Append(CPPPATH=[realpath(join("FreeRTOS-Kernel/portable/GCC/", devices[port[0]]))])
+    env.Append(CPPPATH=[os.path.realpath("FreeRTOS-Kernel/include")])
+    env.Append(CPPPATH=[os.path.realpath(os.path.join("FreeRTOS-Kernel/portable/GCC/", devices[port[0]]))])
     env.Replace(SRC_FILTER=[
             "+<FreeRTOS-Kernel/>",
             "-<FreeRTOS-Kernel/portable/>",
             "+<FreeRTOS-Kernel/portable/MemMang/heap_4.c>",
-            join("+<FreeRTOS-Kernel/portable/GCC/", devices[port[0]], ">")
+            os.path.join("+<FreeRTOS-Kernel/portable/GCC/", devices[port[0]], ">")
         ])
     # FreeRTOSConfig.h is located in the project space, outside of the lib:
     env.Append(CPPPATH=env.get("PROJECT_INCLUDE_DIR", []))

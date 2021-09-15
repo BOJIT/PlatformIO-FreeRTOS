@@ -31,7 +31,7 @@ This library has been tested for the following architectures:
 
 The rest of the architectures supported are added based on the type of ARM core specified in the datasheet. Note that for some devices, this isn't always a direct match. For example, certain Cortex-M7 devices work better with the ARM_CM4F port of FreeRTOS. The STM32H7 line sometimes has both a Cortex-M7 and Cortex-M4 onboard, but the library uses ARM_CM4F by default. Feel free to tweak, submit a Pull Request if an architecture needs building differently, and confirm if architectures not listed here compile and function correctly. Currently, the FreeRTOS ports that utilise the MPU are not utilised.
 
-## Custom Library Overrides
+## Custom Library Overrides (Macros)
 
 ### `FREERTOS_TAG`
 Used to override the version of the FreeRTOS Kernel that is used. By default the latest tagged commit is used
