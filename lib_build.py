@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 
 Import("env")
 
@@ -9,6 +10,8 @@ try:
 except ImportError:
     env.Execute("$PYTHONEXE -m pip install GitPython")
     import git
+
+################################# BUILD MACROS #################################
 
 # For each microcontroller, select the corresponding FreeRTOS port folder:
 devices = {
@@ -69,7 +72,25 @@ devices = {
     "STM32WLxx": "ARM_CM4F"
 }
 
-SRC_URL = "https://github.com/FreeRTOS/FreeRTOS-Kernel.git"
+################################## CONSTANTS ###################################
+
+KERNEL_URL = "https://github.com/FreeRTOS/FreeRTOS-Kernel.git"
+KERNEL_PATH = os.path.realpath('./FreeRTOS-Kernel')
+
+############################### HELPER FUNCTIONS ###############################
+
+def getRemoteTags(url):
+    g = git.cmd.Git()
+    blob = g.ls_remote(url, sort='-v:refname', tags=True, refs=True)
+    entries = blob.split('\n')
+    return list(map(lambda x: x.partition('refs/tags/')[2], entries))
+
+def getLocalTag(path):
+    g = git.Repo(path)
+    return [str(next((tag for tag in g.tags if tag.commit == g.head.commit), None))]
+    pass
+
+################################## MAIN SCRIPT ##################################
 
 port = []
 freertos_tag = ""
@@ -87,28 +108,47 @@ for item in env.get("CPPDEFINES", []):
         if item in devices:
             port.append(item)
 
-# Clone repository if it doesn't exist
-kernel_path = os.path.realpath('./FreeRTOS-Kernel')
-if not os.path.isdir(kernel_path):
-    # Pull tags from version control
-    g = git.cmd.Git()
-    blob = g.ls_remote(SRC_URL, sort='-v:refname', tags=True, refs=True)
-    entries = blob.split('\n')
-    tags = list(map(lambda x: x.partition('refs/tags/')[2], entries))
-
-    if not freertos_tag:
-        # Checkout latest tag
-        tag_name = tags[0]
+# Try to pull tags from remote repo
+try:
+    tags = getRemoteTags(KERNEL_URL)
+except:
+    if os.path.isdir(KERNEL_PATH):
+        # If local kernel is available it can be used, but might not be up to date
+        tags = getLocalTag(KERNEL_PATH)
+        if not freertos_tag:
+            sys.stderr.write("Could not get remote tags - the local kernel (%s) may not be the most up-to-date\n" % tags[0])
     else:
-        # Checkout specified tag
-        for tag in tags:
-            if freertos_tag == tag:
-                tag_name = tag
-        if not tag_name:
-            sys.stderr.write("PlatformIO-FreeRTOS: Tag '%s' could not be found in remote repository!\n" % freertos_tag)
-            env.Exit(1)
+        sys.stderr.write("Could not get remote tags - check you can access %s:\n" % KERNEL_URL)
+        env.Exit(1)
 
-    kernel = git.Repo.clone_from(SRC_URL, kernel_path, depth=1, b=tag_name)
+# Get requested tag name
+if not freertos_tag:
+    # Checkout latest tag
+    for tag in tags:
+        if tag.find("SMP") == -1:    # Do not include SMP tags
+            tag_name = tag
+            break
+else:
+    # Checkout specified tag
+    for tag in tags:
+        if freertos_tag == tag:
+            tag_name = tag
+    if not tag_name:
+        sys.stderr.write("PlatformIO-FreeRTOS: Tag '%s' could not be found in local/remote repository!\n" % freertos_tag)
+        env.Exit(1)
+
+# Is local kernel the correct tag?
+if not(os.path.isdir(KERNEL_PATH)):
+    try:
+        kernel = git.Repo.clone_from(KERNEL_URL, KERNEL_PATH, depth=1, b=tag_name)
+    except:
+        sys.stderr.write("Could not clone Kernel - check you can access %s:\n" % KERNEL_URL)
+        env.Exit(1)
+else:
+    # Replace current kernel if wrong version
+    if tag_name != getLocalTag(KERNEL_PATH)[0]:
+        shutil.rmtree(KERNEL_PATH)
+        kernel = git.Repo.clone_from(KERNEL_URL, KERNEL_PATH, depth=1, b=tag_name)
 
 # Throw exception if no macros match a device name:
 if len(port) == 0:
