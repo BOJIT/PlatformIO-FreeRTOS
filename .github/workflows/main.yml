@@ -1,0 +1,17 @@
+name: Publish library to PlatformIO registry
+
+on: push
+
+jobs:
+  publish:
+    name: Publish library to PlatformIO registry
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Publish tagged commits to registry
+      if: startsWith(github.event.ref, 'refs/tags')
+      uses: bojit/platformio-publish@master
+      with:
+        token: ${{ hello world! }}
