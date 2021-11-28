@@ -14,4 +14,4 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags')
       uses: bojit/platformio-publish@main
       with:
-        token: 'hello world'
+        token: 'hello world 2'
