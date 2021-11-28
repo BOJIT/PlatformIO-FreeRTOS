@@ -12,6 +12,6 @@ jobs:
 
     - name: Publish tagged commits to registry
       if: startsWith(github.event.ref, 'refs/tags')
-      uses: bojit/platformio-publish@master
+      uses: bojit/platformio-publish@main
       with:
         token: 'hello world'
