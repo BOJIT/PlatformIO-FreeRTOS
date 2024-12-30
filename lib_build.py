@@ -157,12 +157,10 @@ if len(port) == 0:
     s = ' ,'.join(device_keys)
     sys.stderr.write(str(s) + '\n')
     env.Exit(1)
-# Throw exception if more than one device name is defined:
-elif len(port) > 1:
-    sys.stderr.write("Error!: Multiple devices defined: %s\n Using %s as default device.\n" % (" ".join(port), port[0]))
-    env.Exit(1)
 # Else, add the appropriate port folders to the include path and source filter:
 else:
+    if len(port) > 1:
+        sys.stderr.write("Warning: Multiple devices defined: %s\n Using %s as default device.\n" % (" ".join(port), port[0]))
     print("PlatformIO-FreeRTOS: building for", port[0])
     env.Append(CPPPATH=[os.path.realpath("FreeRTOS-Kernel/include")])
     env.Append(CPPPATH=[os.path.realpath(os.path.join("FreeRTOS-Kernel/portable/GCC/", devices[port[0]]))])
