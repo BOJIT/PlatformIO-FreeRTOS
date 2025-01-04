@@ -1,5 +1,5 @@
 {
-    "name" : "PlatformIO-FreeRTOS",
+    "name": "PlatformIO-FreeRTOS",
     "description": "FreeRTOS mirror modified for use with PlatformIO",
     "keywords": "FreeRTOS,rtos,libopencm3",
     "authors": [
@@ -13,11 +13,11 @@
         "type": "git",
         "url": "https://github.com/BOJIT/PlatformIO-FreeRTOS"
     },
-    "version" : "2.1.3",
+    "version": "2.1.4",
     "license": "MIT",
-    "frameworks": "libopencm3, arduino, cmsis, stm32cube, spl",
+    "frameworks": "libopencm3, arduino, cmsis, stm32cube, spl, ",
     "platforms": "ststm32, gd32v, siliconlabsefm32, nxplpc, atmelsam",
-    "build" : {
+    "build": {
         "extraScript": "lib_build.py"
     }
 }
