@@ -15,7 +15,7 @@
     },
     "version": "2.1.4",
     "license": "MIT",
-    "frameworks": "libopencm3, arduino, cmsis, stm32cube, spl, ",
+    "frameworks": "libopencm3, arduino, cmsis, stm32cube, spl",
     "platforms": "ststm32, gd32v, siliconlabsefm32, nxplpc, atmelsam",
     "build": {
         "extraScript": "lib_build.py"
