@@ -69,6 +69,9 @@ devices = {
     "STM32L5xx": "ARM_CM33/non_secure",
     "STM32WBxx": "ARM_CM4F",
     "STM32WLxx": "ARM_CM4F",
+    # Other macros
+    "__SAME51J19A__": "ARM_CM4F", # adafruit_feather_m4_can
+    "__SAMD51J19A__": "ARM_CM4F", # adafruit_feather_m4
 }
 
 ################################## CONSTANTS ###################################
